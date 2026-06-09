@@ -1,0 +1,41 @@
+# Tesseract OCR 配置文件
+# 用于医学文档OCR识别
+
+# 语言设置
+chi_sim+eng
+
+# 页面分割模式
+# 6: 单块文本（适用于医学报告表格）
+--psm 6
+
+# OCR引擎模式
+# 3: 默认（自动选择）
+--oem 3
+
+# 高级参数
+# 提高表格识别准确率
+--textord_force_make_prop_words false
+
+# 允许表格单元格合并
+--textord_tablefind_recog_ratio 1.00
+
+# 改进数字识别
+-c preserve_interword_spaces=1
+
+# 限制字符集（可选，根据需要启用）
+# 对于纯数字和单位的数据
+# -c tessedit_char_whitelist=0123456789.+-×÷%μmolLUg/
+
+# 对于包含医学符号的文本
+# -c tessedit_char_whitelist=0123456789.+-×÷%↑↓±μmolLUg/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\u4e00-\u9fa5
+
+# 启用词典（提高医学术语识别率）
+# 需要先训练自定义词典
+# --user-words medical_words.txt
+
+# 输出调试信息（可选）
+# --debug-level 1
+
+# 置信度阈值（低于此值的结果标记为低置信度）
+--min_characters_to_try 5
+--tessedit_min_confidence 60

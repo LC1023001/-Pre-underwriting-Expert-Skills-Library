@@ -1,0 +1,46 @@
+{
+  "image_preprocessing": {
+    "enable_contrast_enhancement": true,
+    "contrast_factor": 2.0,
+    "enable_brightness_adjustment": true,
+    "brightness_factor": 1.2,
+    "enable_sharpening": true,
+    "enable_denoising": true,
+    "denoise_method": "median",
+    "denoise_size": 3,
+    "enable_binarization": false,
+    "binarization_threshold": 128,
+    "enable_deskewing": true,
+    "deskew_method": "hough"
+  },
+  "pdf_processing": {
+    "dpi": 300,
+    "quality": 95,
+    "output_format": "jpg",
+    "crop_margins": {
+      "top": 50,
+      "bottom": 50,
+      "left": 20,
+      "right": 20
+    }
+  },
+  "ocr_config": {
+    "language": "chi_sim+eng",
+    "psm": 6,
+    "oem": 3,
+    "custom_config": "--textord_force_make_prop_words false"
+  },
+  "post_processing": {
+    "enable_medical_term_correction": true,
+    "enable_value_validation": true,
+    "enable_format_standardization": true,
+    "enable_abnormal_detection": true
+  },
+  "output": {
+    "format": "markdown",
+    "include_raw_text": true,
+    "include_metadata": true,
+    "include_processing_details": true,
+    "save_as_json": true
+  }
+}

@@ -1,0 +1,19 @@
+# Medical OCR Requirements
+# 安装方法: pip install -r requirements.txt
+
+# PDF处理
+pdf2image>=1.16.0
+
+# 图像处理
+Pillow>=9.0.0
+numpy>=1.21.0
+opencv-python>=4.5.0
+
+# OCR引擎
+pytesseract>=0.3.8
+
+# 文本处理
+chardet>=4.0.0
+
+# 可选: 更好的图像预处理
+imagecodecs>=2021.8.26

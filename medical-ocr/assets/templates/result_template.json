@@ -1,0 +1,52 @@
+{
+  "metadata": {
+    "report_type": "{{report_type}}",
+    "recognition_date": "{{recognition_date}}",
+    "source_file": "{{source_file}}",
+    "ocr_engine": "{{ocr_engine}}",
+    "accuracy": "{{accuracy}}",
+    "processing_time": "{{processing_time}}"
+  },
+  "patient_info": {
+    "name": "{{patient_name}}",
+    "gender": "{{patient_gender}}",
+    "age": "{{patient_age}}",
+    "test_date": "{{test_date}}"
+  },
+  "test_results": [
+    {
+      "indicator": "",
+      "indicator_cn": "",
+      "value": "",
+      "unit": "",
+      "reference_range": "",
+      "status": "",
+      "is_abnormal": false,
+      "abnormal_type": ""
+    }
+  ],
+  "abnormal_results": [],
+  "diagnoses": [
+    ""
+  ],
+  "physician_notes": [
+    ""
+  ],
+  "raw_ocr_text": "",
+  "processing_details": {
+    "preprocessing": {
+      "contrast_enhanced": false,
+      "denoised": false,
+      "deskewed": false,
+      "binarized": false
+    },
+    "tesseract_config": {
+      "language": "chi_sim+eng",
+      "psm": 6,
+      "oem": 3,
+      "custom_config": ""
+    }
+  },
+  "warnings": [],
+  "disclaimer": "OCR识别结果可能存在误差，重要医学信息请人工核对。本识别结果仅供参考，不能替代医师诊断。如有疑问，请咨询专业医师。"
+}
