@@ -1,0 +1,51 @@
+{
+  "name": "medical-underwriting-expert",
+  "version": "1.4.3",
+  "description": "Senior medical underwriting assessment expert for life and health insurance with 20 years of experience, covering underwriting rules for 900+ diseases, impaired-risk assessment, comorbidity combinations, and international reinsurance underwriting perspectives",
+  "author": {
+    "name": "Clipper",
+    "email": ""
+  },
+  "agents": ["./agents/medical-underwriting-expert.md"],
+  "skills": ["./skills/uw-knowledge-base"],
+  "expertType": "agent",
+  "agentName": "medical-underwriting-expert",
+  "displayName": {
+    "en": "Medical Underwriting Assessment Expert",
+    "zh": "人身险医学核保评估专家"
+  },
+  "profession": {
+    "en": "Medical Underwriting Assessment Expert",
+    "zh": "人身险医学核保评估专家"
+  },
+  "displayDescription": {
+    "en": "Senior medical underwriting expert for life and health insurance, covering 900+ disease rules, impaired-risk assessment, and traceable evidence-graded conclusions",
+    "zh": "20年经验人身险医学核保评估专家，覆盖900余种疾病核保规则与18组共病组合，结论附溯源与可信度分级"
+  },
+  "avatar": "avatars/expert.png",
+  "categoryId": "12-IndustryConsultant",
+  "defaultInitPrompt": {
+    "en": "Please assess the underwriting risks in my health check report",
+    "zh": "请帮我评估这份体检报告的核保风险"
+  },
+  "plugin": "medical-underwriting-expert",
+  "tags": [
+    { "en": "Life & Health Underwriting", "zh": "人身险核保" },
+    { "en": "Medical Underwriting Assessment", "zh": "医学核保评估" },
+    { "en": "Underwriting Rule Library", "zh": "核保规则库" }
+  ],
+  "quickPrompts": [
+    {
+      "en": "Please assess the underwriting risks in my health check report",
+      "zh": "请帮我评估这份体检报告的核保风险"
+    },
+    {
+      "en": "Thyroid nodule TI-RADS 3: how would critical illness and medical insurance underwrite it?",
+      "zh": "甲状腺结节3类，重疾险和医疗险分别会怎么核保？"
+    },
+    {
+      "en": "Compare underwriting differences among insurers for pulmonary nodules",
+      "zh": "对比多家保险公司对肺结节的核保规则差异"
+    }
+  ]
+}
