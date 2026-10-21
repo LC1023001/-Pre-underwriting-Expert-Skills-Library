@@ -1,0 +1,132 @@
+{
+  "form": {
+    "code": "",
+    "fields": [
+      {
+        "code": "",
+        "key": "brand_name",
+        "label": "品牌/图标名称",
+        "placeholder": "品牌名、图标名；没有可不填",
+        "type": "text"
+      },
+      {
+        "code": "",
+        "key": "industry",
+        "label": "所属行业/应用场景",
+        "placeholder": "如：美妆护肤、App图标、工具功能图标",
+        "required": true,
+        "type": "text"
+      },
+      {
+        "code": "",
+        "default": "smart_recommend",
+        "hint": "不确定可选“智能推荐”，将根据品牌名称、行业和应用场景判断。",
+        "key": "logo_type",
+        "label": "Logo形式",
+        "options": [
+          {
+            "code": "",
+            "key": "smart_recommend",
+            "label": "智能推荐"
+          },
+          {
+            "code": "",
+            "key": "symbol_only",
+            "label": "只有图形"
+          },
+          {
+            "code": "",
+            "key": "wordmark_only",
+            "label": "只有文字"
+          },
+          {
+            "code": "",
+            "key": "symbol_wordmark",
+            "label": "图形+文字"
+          }
+        ],
+        "type": "radio_tags"
+      },
+      {
+        "code": "",
+        "default": "smart_recommend",
+        "hint": "不确定可选“智能推荐”，将根据品牌名称、行业和应用场景判断。",
+        "key": "style",
+        "label": "Logo风格（可选）",
+        "options": [
+          {
+            "code": "",
+            "key": "smart_recommend",
+            "label": "智能推荐"
+          },
+          {
+            "code": "",
+            "key": "modern_minimal",
+            "label": "简约现代"
+          },
+          {
+            "code": "",
+            "key": "vintage_classic",
+            "label": "复古经典"
+          },
+          {
+            "code": "",
+            "key": "handwritten_art",
+            "label": "手写艺术"
+          },
+          {
+            "code": "",
+            "key": "geometric",
+            "label": "几何图形"
+          },
+          {
+            "code": "",
+            "key": "organic",
+            "label": "自然有机"
+          },
+          {
+            "code": "",
+            "key": "tech_futuristic",
+            "label": "科技未来"
+          }
+        ],
+        "type": "radio_tags"
+      },
+      {
+        "code": "",
+        "file_types": [
+          "image"
+        ],
+        "hint": "非任务执行、上传、大小处理、格式转换或完整性校验所必需，不解析附件；必要解析结果不得用于推测、补充或改写其他参数。",
+        "key": "ref_images",
+        "label": "参考图（可选）",
+        "maxCount": 5,
+        "type": "file_upload"
+      },
+      {
+        "code": "",
+        "key": "color_pref",
+        "label": "偏好色系（可选）",
+        "placeholder": "如：蓝绿色系、暖色调",
+        "type": "text"
+      },
+      {
+        "code": "",
+        "hint": "仅填写用户明确提出的附加约束；未明确提出时留空，不得根据素材、文件名或任务类型推断。",
+        "key": "extra",
+        "label": "其他要求（可选）",
+        "maxLength": 500,
+        "placeholder": "品牌调性是什么以及输入具体要求：图形是什么？类型要求如：徽章、首字母、吉祥物等。",
+        "type": "textarea"
+      }
+    ],
+    "prompt": "[Logo设计]帮我设计品牌Logo或图标。\n品牌/图标名称：{brand_name}\n所属行业/应用场景：{industry}\nLogo形式：{logo_type}\nLogo风格：{style}\n参考图（可选）：{ref_images}\n偏好色系：{color_pref}\n其他要求：{extra}"
+  },
+  "schema_version": 1,
+  "skill": {
+    "category": "品牌设计",
+    "description": "根据品牌名称、行业、定位和视觉偏好生成Logo方向与版式方案。适用于Logo设计、标志设计、品牌标识、logo maker、logo design。美图设计室提供。",
+    "id": "logo-design",
+    "title": "Logo设计"
+  }
+}
