@@ -147,7 +147,8 @@ def cmd_list(args):
         print(f"  - {p.name}")
     print("\n其他：")
     print(f"  - {SKILL_DIR.name}/SKILL.md")
-    print(f"  - {SKILL_DIR.name}/CHANGELOG.md")
+    if CHANGELOG.exists():
+        print(f"  - {SKILL_DIR.name}/CHANGELOG.md")
     print(f"  - {SKILL_DIR.name}/scripts/{Path(__file__).name}\n")
     return 0
 
