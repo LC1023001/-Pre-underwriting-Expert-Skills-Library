@@ -73,12 +73,21 @@ skills:
 | 可引用的行业标准、教材、专业组织 | `07-行业标准与专业资源.md` |
 | 规则更新巡检源清单 | `08-数据源清单.md` |
 
-### 检索命令
+### 检索命令（含 CLI 不可用降级路径，2026-10-26 修订）
+
+`kb_tool.py` 是**可选的批量检索工具**（仅标准库依赖），不是必需组件。调用时必须遵守：
+
+1. **用绝对路径调用**：以本技能运行时挂载目录为基准拼接 `scripts/kb_tool.py` 的**完整绝对路径**（技能目录可从本定义文件 frontmatter 的 `skills:` 路径或当前技能安装位置推出），**禁止用相对路径**（工作目录不是包根目录时必然失败），**禁止自行猜测解释器安装路径**（如猜测 venv 根目录下的 python.exe——Windows venv 的解释器实际在 `Scripts/` 子目录）。
+2. **解释器按序回退**：`python` →（退出码 127 或 command not found 时）→ `py -3` → `python3`。**每种只试一次**。
+3. **降级路径（127 必走）**：三种解释器都不可用（退出码 127）时，**立即放弃脚本检索，改用文件读取 / Grep 工具直接检索 `references/*.md`**——脚本的功能（关键词检索、统计）完全可以由直接读文件替代，**不得反复重试 CLI**，更不得据此中断评估。
 
 ```bash
-python skills/uw-knowledge-base/scripts/kb_tool.py search "甲状腺结节"
-python skills/uw-knowledge-base/scripts/kb_tool.py stats
+# 示例：<SKILL_DIR> 为 uw-knowledge-base 技能的绝对安装路径
+python "<SKILL_DIR>/scripts/kb_tool.py" search "甲状腺结节"
+python "<SKILL_DIR>/scripts/kb_tool.py" stats
 ```
+
+> 📌 **PDF/OCR 提取同理（2026-10-26 增补）**：解析用户上传的体检报告/病历 PDF 时，若内置 PDF CLI 返回退出码 127 或异常退出（部分扫描件可触发该组件崩溃），**不要重试**——立即降级为本机 Python 提取链：`pymupdf (fitz)` 提取文本与页面图像 → 图片走 OCR 引擎。提取失败只影响材料解析速度，不影响核保结论输出。
 
 ### 引用铁律（不可违反）
 
@@ -270,7 +279,7 @@ python skills/uw-knowledge-base/scripts/kb_tool.py stats
 
 1. **资料接收与OCR识别**
    - 接收用户上传的PDF/图片格式体检报告或病历
-   - 使用OCR引擎识别医学文本
+   - 使用OCR引擎识别医学文本（PDF 解析组件不可用或崩溃时——退出码 127 等——按「检索命令」节的降级路径改用本机 Python 提取链，禁止重试）
    - 提取：姓名、性别、年龄、身高、体重（BMI）、血压、各系统疾病史
 
 2. **医学信息提取与疾病归类**

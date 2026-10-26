@@ -1,6 +1,6 @@
 {
   "name": "health-underwriting-expert",
-  "version": "1.6.0",
+  "version": "1.6.2",
   "description": "Health and life insurance underwriting expert with nearly 20 years of dual underwriting-and-claims experience. Built-in critical illness underwriting engine (ci-underwriting v3.1): 1,000+ disease rules, 36 comorbidity combinations, 250+ reinsurance rules, 5,000+ rating points, plus a traceable knowledge base (regulatory standards, MIRA/NRS rating methodology, non-standard risk matrix). Every conclusion carries a source/date/confidence triple and relies only on Grade A/B authoritative sources.",
   "author": {
     "name": "Clipper",
@@ -20,8 +20,13 @@
     "impaired-life",
     "knowledge-base"
   ],
-  "agents": ["./agents/health-underwriting-expert.md"],
-  "skills": ["./skills/uw-knowledge-base", "./skills/ci-underwriting"],
+  "agents": [
+    "./agents/health-underwriting-expert.md"
+  ],
+  "skills": [
+    "./skills/uw-knowledge-base",
+    "./skills/ci-underwriting"
+  ],
   "expertType": "agent",
   "agentName": "health-underwriting-expert",
   "displayName": {
@@ -39,27 +44,36 @@
   "avatar": "avatars/expert.png",
   "categoryId": "12-IndustryConsultant",
   "defaultInitPrompt": {
-    "zh": "请根据我的体检报告，结合21类病种核保规则与共病组合，评估我的预核保风险",
-    "en": "Assess my pre-underwriting risk based on my checkup report, using the 21-category underwriting rules and comorbidity combinations"
+    "zh": "请帮我评估这份体检报告的核保风险",
+    "en": "Please assess the underwriting risks in my health check report"
   },
   "plugin": "health-underwriting-expert",
   "tags": [
-    { "en": "Pre-underwriting Assessment", "zh": "预核保评估" },
-    { "en": "Life & Reinsurance Methodology", "zh": "人身险与再保方法学" },
-    { "en": "Traceable Sourced Rules", "zh": "可溯源规则" }
+    {
+      "en": "Pre-underwriting Assessment",
+      "zh": "预核保评估"
+    },
+    {
+      "en": "Life & Reinsurance Methodology",
+      "zh": "人身险与再保方法学"
+    },
+    {
+      "en": "Traceable Sourced Rules",
+      "zh": "可溯源规则"
+    }
   ],
   "quickPrompts": [
     {
-      "en": "Assess my pre-underwriting risk based on my checkup report, using the 21-category underwriting rules and comorbidity combinations",
-      "zh": "请根据我的体检报告，结合21类病种核保规则与共病组合，评估我的预核保风险"
+      "en": "Please assess the underwriting risks in my health check report",
+      "zh": "请帮我评估这份体检报告的核保风险"
     },
     {
-      "en": "For [condition], compare how strict the underwriting standard is across strictness tiers (lenient / moderate / strict), and give the expected conclusion for each tier",
-      "zh": "针对[疾病名称]，按宽松/中等/严格三档核保尺度分别给出预估结论"
+      "en": "Thyroid nodule TI-RADS 3: how would critical illness and medical insurance underwrite it?",
+      "zh": "甲状腺结节3类，重疾险和医疗险分别会怎么核保？"
     },
     {
-      "en": "Explain how extra mortality (EM) and the mortality index are applied to this case, and which reinsurance rating scale applies. Cite sources",
-      "zh": "请用额外死亡率EM与死亡指数分析本案的核保逻辑，说明适用哪套再保评点体系，并给出规则来源"
+      "en": "Compare underwriting differences among insurers for pulmonary nodules",
+      "zh": "对比多家保险公司对肺结节的核保规则差异"
     }
   ]
 }

@@ -57,12 +57,17 @@ agent_created: true
 
 ### Step 2：检索
 
+`scripts/kb_tool.py` 为**可选的批量检索工具**（零第三方依赖）。调用要点（2026-10-26 修订）：
+
 ```bash
-python scripts/kb_tool.py search "甲状腺结节"
-python scripts/kb_tool.py stats
+# <SKILL_DIR> = 本技能（uw-knowledge-base）的绝对安装路径
+python "<SKILL_DIR>/scripts/kb_tool.py" search "甲状腺结节"
+python "<SKILL_DIR>/scripts/kb_tool.py" stats
 ```
 
-（也可直接用文件读取工具打开对应 `references/*.md` 查阅；脚本仅用于关键词批量检索。）
+- **必须用绝对路径**调用脚本（工作目录不在技能目录时相对路径必然失败）；**禁止猜测解释器安装路径**。
+- 解释器按序回退：`python` → `py -3` → `python3`，每种只试一次。
+- **退出码 127（组件不可用）= 立即降级**：不再重试，直接用文件读取 / Grep 工具检索 `references/*.md`——脚本仅提供关键词批量检索与统计，功能可完全由直接读文件替代。
 
 ### Step 3：输出必须带溯源
 
