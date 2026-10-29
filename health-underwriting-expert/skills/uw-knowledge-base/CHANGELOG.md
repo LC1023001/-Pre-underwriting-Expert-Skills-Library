@@ -487,7 +487,20 @@
 | # | 条目 | 建议 |
 |---|------|------|
 | 1 | CLI 扫描页崩溃属官方组件缺陷（workbuddy-pdf 0.1.0 / 2026.10.13），本地无法修复 | 待官方修复新版 CLI 后，脚本可仍保留（预检编排本身有价值） |
-| 2 | 本机无 tesseract/paddleocr，扫描页 OCR 靠会话视觉读取 | 若高频处理扫描件，可装 PaddleOCR（ci-underwriting 已有选型结论：v3+ Windows 中文最佳，76s/页、置信度 96.9%） |
+| ~~2~~ | ~~本机无 tesseract/paddleocr，扫描页 OCR 靠会话视觉读取~~ | **已于同日解决**（见下方「v1.5 增补」）：PaddleOCR v3+ 已装入双 Python 环境，pdf_extract.py v1.1 自动批量 OCR |
+
+### v1.5 增补（同日 16:35）· OCR 链路自动化（pdf_extract.py v1.0→v1.1）
+
+**执行方式**：手动触发（用户指令：按 ci-underwriting 选型结论装 PaddleOCR v3+）｜**依据**：本机实测（诊断证明书扫描件 + paddlepaddle 3.3.1 CPU）
+
+| # | 内容 | 写入位置 | 来源 | 可信度 |
+|---|------|---------|------|:------:|
+| 1 | 环境安装：paddlepaddle 3.3.1（CPU）+ paddleocr 3.7.0，装入两个 Python 环境（`versions/3.13.12` 主环境 + `envs/default` venv），cp313 win_amd64 轮子兼容 | 本机 | 本会话实测 | — |
+| 2 | **Windows 铁律：paddlepaddle 3.x 默认 oneDNN 路径抛 `NotImplementedError: ConvertPirAttribute2RuntimeAttribute (onednn_instruction.cc)`——必须 `PaddleOCR(lang='ch', enable_mkldnn=False)`**，禁用后识别正常（35 行、置信度 0.995） | `pdf_extract.py` 注释 + 本条目 | 本会话实测 | — |
+| 3 | v3+ API 适配（选型结论落地）：`ocr.predict(img)` + `res['rec_texts']/['rec_scores']`；`use_angle_cls`/`show_log`/`cls` 已移除传入即报错；模型缓存 `~/.paddlex/official_models/` | `pdf_extract.py` 重写 paddle 分支 | ci-underwriting SKILL.md 沉淀 + 实测 | — |
+| 4 | 架构改进：OCR 由逐页单次调用改为**单子进程批量**（模型只加载一次，超时 `600+150×页数` 秒），结果经临时 JSON 回传（规避 stdout 横幅污染）；子进程固定 `PYTHONIOENCODING=utf-8`（Windows GBK 输出曾致父进程读取线程 UnicodeDecodeError） | `pdf_extract.py` v1.1 | 本会话实测 | — |
+| 5 | 引擎优先级调整：paddle（中文医学最佳）→ tesseract（降级） | `pdf_extract.py` `detect_ocr()` | 选型结论 | — |
+| 6 | agents PDF 提取段更新：标注 OCR 已自动化、多页 CPU 识别慢（每页 10~40s）属正常等待勿中断重跑 | `agents/health-underwriting-expert.md` | — | — |
 
 ---
 

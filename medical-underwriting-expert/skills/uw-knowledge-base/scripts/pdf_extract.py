@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""pdf_extract.py — 核保材料 PDF 稳健提取链（v1.0，2026-10-29）
+"""pdf_extract.py — 核保材料 PDF 稳健提取链（v1.1，2026-10-29）
 
 背景：workbuddy-pdf CLI 0.1.0 (2026.10.13) 在 Windows 上处理含扫描页的 PDF 时
 会在文本提取路径（md/txt/md-plain/structure/table）发生原生崩溃
@@ -16,11 +16,24 @@
      图片路径交给会话的视觉能力读取；
   4. 输出统一产物：<out>/content.md、<out>/images/page-XXXX.png、<out>/report.json。
 
+OCR 引擎（v1.1，2026-10-29 接入 PaddleOCR v3+）：
+  - 优先级：paddleocr（中文医学文档最佳）→ tesseract（降级）。
+  - PaddleOCR v3+ 适配要点（与 v2 断裂式差异，勿用旧 API）：
+    初始化 `PaddleOCR(lang='ch')`，识别用 `ocr.predict(img)`；
+    `use_angle_cls`/`show_log`/`cls` 参数已移除，传入直接报错；
+    结果取 `res['rec_texts']` / `res['rec_scores']`（list[OCRResult]）。
+  - **Windows 铁律**：paddlepaddle 3.x 的 oneDNN 路径在本机 CPU 上会抛
+    `NotImplementedError: ConvertPirAttribute2RuntimeAttribute ... onednn_instruction`
+    ——必须 `enable_mkldnn=False`，否则引擎整体不可用（2026-10-29 实测）。
+  - 批量识别在单子进程内完成（模型只加载一次），结果经临时 JSON 回传，
+    避免逐页重启引擎与 stdout 混入横幅日志。
+
 退出码语义：
   0 成功（含部分页降级）；2 用法错误；3 输入文件不存在；
   4 PDF 无法解析/加密；5 无任何可提取内容。
 
-依赖：pymupdf（必需，纯 Python 安装无原生依赖冲突）；OCR 引擎（可选）。
+依赖：pymupdf（必需，纯 Python 安装无原生依赖冲突）；OCR 引擎（可选，
+推荐 `pip install paddlepaddle paddleocr`，CPU 版即可）。
 
 用法：
   python pdf_extract.py <input.pdf> [output_dir] [--dpi 150] [--no-ocr] [--no-cli]
@@ -93,12 +106,12 @@ def try_cli(cli, pdf_path, out_md):
 
 # ---------------------------------------------------------------- OCR 引擎
 def detect_ocr():
-    """探测可用 OCR 引擎。返回 (kind, exe_or_none)。kind ∈ {tesseract, paddle, none}。"""
-    # 1) 环境变量显式指定优先
-    t = os.environ.get("PDF2DOCX_TESSERACT") or shutil.which("tesseract")
-    if t and os.path.isfile(t):
-        return "tesseract", t
-    # 2) PaddleOCR：指定了专用 python 或当前解释器可导入
+    """探测可用 OCR 引擎。返回 (kind, exe_or_none)。kind ∈ {paddle, tesseract, none}。
+
+    优先级：paddleocr（中文医学文档识别最佳，选型结论 2026-06）→ tesseract（降级）。
+    paddleocr 可用 PDF2DOCX_PADDLE_PYTHON 指定装了该包的解释器，否则探测当前解释器。
+    """
+    # 1) PaddleOCR：环境变量指定解释器优先，其次当前解释器可导入
     paddle_py = os.environ.get("PDF2DOCX_PADDLE_PYTHON")
     if paddle_py and os.path.isfile(paddle_py):
         return "paddle", paddle_py
@@ -107,38 +120,96 @@ def detect_ocr():
         return "paddle", None
     except ImportError:
         pass
+    # 2) tesseract：环境变量指定或 PATH
+    t = os.environ.get("PDF2DOCX_TESSERACT") or shutil.which("tesseract")
+    if t and os.path.isfile(t):
+        return "tesseract", t
     return "none", None
 
 
-def ocr_image(engine_kind, engine, png_path):
-    """对单页 PNG 跑 OCR，返回文本（失败返回空串，不抛异常）。"""
-    try:
-        if engine_kind == "tesseract":
-            for lang in ("chi_sim+eng", "eng"):
-                proc = subprocess.run(
-                    [engine, png_path, "stdout", "-l", lang],
-                    capture_output=True, text=True, timeout=120,
-                )
-                if proc.returncode == 0 and proc.stdout.strip():
-                    return proc.stdout.strip()
-            return ""
-        if engine_kind == "paddle":
-            py = engine or sys.executable
-            code = (
-                "from paddleocr import PaddleOCR;"
-                f"ocr=PaddleOCR(use_angle_cls=True,lang='ch',show_log=False);"
-                f"r=ocr.ocr(r'{png_path}',cls=True);"
-                "print('\\n'.join(line[1][0] for p in r if p for line in p))"
-            )
+# PaddleOCR v3+ 批量子进程代码：单进程加载一次模型，逐页 predict，
+# 结果写临时 JSON 回传（规避 stdout 横幅日志污染与逐页重启开销）。
+# 铁律：Windows 上必须 enable_mkldnn=False（paddlepaddle 3.x oneDNN 路径
+# 会抛 NotImplementedError，2026-10-29 实测）；勿传 v2 已废弃参数。
+_PADDLE_BATCH_CODE = r"""
+import json, sys
+out_path, paths = sys.argv[1], sys.argv[2:]
+result = {}
+try:
+    from paddleocr import PaddleOCR
+    ocr = PaddleOCR(lang="ch", enable_mkldnn=False)
+    for p in paths:
+        try:
+            r = ocr.predict(p)[0]
+            texts = list(r.get("rec_texts", []))
+            scores = list(r.get("rec_scores", []))
+            result[p] = {
+                "text": "\n".join(texts),
+                "lines": len(texts),
+                "conf": round(sum(scores) / len(scores), 3) if scores else 0.0,
+            }
+        except Exception as e:
+            result[p] = {"text": "", "lines": 0, "conf": 0.0, "error": str(e)[:200]}
+except Exception as e:
+    result["__engine_error__"] = str(e)[:300]
+with open(out_path, "w", encoding="utf-8") as fh:
+    json.dump(result, fh, ensure_ascii=False)
+"""
+
+
+def ocr_images_batch(kind, engine, png_paths):
+    """批量 OCR。返回 dict[png_path -> text]；引擎整体不可用返回 None（不抛异常）。"""
+    if kind == "paddle":
+        py = engine or sys.executable
+        tf = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8")
+        out_json = tf.name
+        tf.close()
+        try:
+            # 初始化约 15~60s（含模型加载），CPU 上每页约 3~10s
+            timeout = min(3600, 600 + 150 * len(png_paths))
+            # PYTHONIOENCODING：Windows 下 paddle 子进程默认 GBK 输出会让父进程
+            # UTF-8 读取线程抛 UnicodeDecodeError；显式容错双保险（结果走 JSON 文件）
             proc = subprocess.run(
-                [py, "-c", code], capture_output=True, text=True, timeout=300,
+                [py, "-c", _PADDLE_BATCH_CODE, out_json] + list(png_paths),
+                capture_output=True, text=True, timeout=timeout,
+                encoding="utf-8", errors="replace",
+                env={**os.environ, "PYTHONIOENCODING": "utf-8"},
             )
-            if proc.returncode == 0:
-                return proc.stdout.strip()
-            return ""
-    except Exception:
-        return ""
-    return ""
+            if proc.returncode != 0 or not os.path.isfile(out_json):
+                log(f"PaddleOCR 批量子进程失败（rc={proc.returncode}），保留 PNG 供视觉读取")
+                return None
+            with open(out_json, encoding="utf-8") as fh:
+                data = json.load(fh)
+            if "__engine_error__" in data:
+                log(f"PaddleOCR 引擎错误：{data['__engine_error__']}")
+                return None
+            return {p: (data.get(p) or {}).get("text", "") for p in png_paths}
+        except (subprocess.TimeoutExpired, OSError, json.JSONDecodeError) as exc:
+            log(f"PaddleOCR 进程异常（{type(exc).__name__}），保留 PNG 供视觉读取")
+            return None
+        finally:
+            try:
+                os.remove(out_json)
+            except OSError:
+                pass
+    if kind == "tesseract":
+        out = {}
+        for png_path in png_paths:
+            txt = ""
+            for lang in ("chi_sim+eng", "eng"):
+                try:
+                    proc = subprocess.run(
+                        [engine, png_path, "stdout", "-l", lang],
+                        capture_output=True, text=True, timeout=120,
+                    )
+                    if proc.returncode == 0 and proc.stdout.strip():
+                        txt = proc.stdout.strip()
+                        break
+                except (subprocess.TimeoutExpired, OSError):
+                    break
+            out[png_path] = txt
+        return out
+    return None
 
 
 # ---------------------------------------------------------------- 主流程
@@ -237,28 +308,32 @@ def main() -> int:
         with open(md_path, "w", encoding="utf-8") as fh:
             fh.write("\n".join(parts))
 
-    # ---- OCR（可选）：对渲染出的扫描页跑引擎，结果合入 content.md
+    # ---- OCR（可选）：对渲染出的扫描页批量跑引擎，结果合入 content.md
     ocr_engine_kind = "none"
     ocr_done = 0
     rendered = sorted(os.listdir(img_dir)) if os.path.isdir(img_dir) else []
     if rendered and not args.no_ocr:
         ocr_engine_kind, engine = detect_ocr()
         if ocr_engine_kind == "none":
-            log("未发现 OCR 引擎（tesseract / paddleocr）。扫描页保留为 PNG，"
-                "请用视觉能力直接读取 images/page-*.png 提取医学信息")
+            log("未发现 OCR 引擎。扫描页保留为 PNG，请用视觉能力直接读取 images/page-*.png "
+                "提取医学信息（如需自动化：pip install paddlepaddle paddleocr，CPU 版即可）")
         else:
-            log(f"OCR 引擎: {ocr_engine_kind}，开始识别 {len(rendered)} 张扫描页…")
-            with open(md_path, "a", encoding="utf-8") as fh:
-                fh.write("\n\n## OCR 识别结果（扫描页）\n")
-                for png_name in rendered:
-                    png_path = os.path.join(img_dir, png_name)
-                    txt = ocr_image(ocr_engine_kind, engine, png_path)
-                    page_no = re.sub(r"\D", "", png_name)
-                    if txt:
-                        fh.write(f"\n### 第 {page_no} 页\n\n{txt}\n")
-                        ocr_done += 1
-                    else:
-                        fh.write(f"\n### 第 {page_no} 页\n\n（OCR 未识别出文本，请用视觉能力读取 images/{png_name}）\n")
+            png_paths = [os.path.join(img_dir, n) for n in rendered]
+            log(f"OCR 引擎: {ocr_engine_kind}，开始批量识别 {len(rendered)} 张扫描页…")
+            batch = ocr_images_batch(ocr_engine_kind, engine, png_paths)
+            if batch is None:
+                log("OCR 引擎运行失败，扫描页保留为 PNG 供视觉读取")
+            else:
+                with open(md_path, "a", encoding="utf-8") as fh:
+                    fh.write("\n\n## OCR 识别结果（扫描页）\n")
+                    for png_name, png_path in zip(rendered, png_paths):
+                        page_no = re.sub(r"\D", "", png_name)
+                        txt = (batch.get(png_path) or "").strip()
+                        if txt:
+                            fh.write(f"\n### 第 {page_no} 页\n\n{txt}\n")
+                            ocr_done += 1
+                        else:
+                            fh.write(f"\n### 第 {page_no} 页\n\n（OCR 未识别出文本，请用视觉能力读取 images/{png_name}）\n")
 
     # ---- 报告
     md_size = os.path.getsize(md_path) if os.path.isfile(md_path) else 0

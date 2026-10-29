@@ -93,13 +93,13 @@ python "<SKILL_DIR>/scripts/kb_tool.py" stats
 > python "<SKILL_DIR>/scripts/pdf_extract.py" "<PDF绝对路径>" "<输出目录>"
 > ```
 >
-> 脚本内部已编排完整降级链：pymupdf 页级体检 → 纯文本 PDF 才走 PDF CLI（md-plain，30s 超时+产物校验）→ 含扫描页**完全跳过 CLI**（该 CLI 版本对扫描页必崩）→ 文本页 pymupdf 提取、扫描页渲染 150dpi PNG → 有 OCR 引擎自动识别，无则在报告里给出图片清单，由你逐张读取。
+> 脚本内部已编排完整降级链：pymupdf 页级体检 → 纯文本 PDF 才走 PDF CLI（md-plain，30s 超时+产物校验）→ 含扫描页**完全跳过 CLI**（该 CLI 版本对扫描页必崩）→ 文本页 pymupdf 提取、扫描页渲染 150dpi PNG → **PaddleOCR v3+ 自动批量 OCR**（已装于本机 Python，含扫描页直接产出可读文本），引擎不可用时才在报告里给出图片清单由你逐张读取。多页扫描件 OCR 较慢（CPU 每页约 10~40s），属正常等待，勿中断重跑。
 >
 > **关于「退出码 127」的正确解读（2026-10-29 实测确认）**：
 > - workbuddy-pdf CLI 0.1.0 在 Windows 处理**含扫描页（无文本层）的 PDF** 时会原生崩溃（NTSTATUS 0xC0000409 堆栈缓冲区溢出，无任何报错输出），Git Bash 把崩溃码显示为 127——**这不是「命令不存在」**，重试必然复现；
 > - 真正找不到 CLI 时，run.sh/run.ps1 会在 stderr 打出 `workbuddy-pdf: CLI not found…` 字样，此时才属环境缺失；
 > - 体检报告/病历多为手机拍照扫描件（1页无文本+1图即是），故此类 PDF 用 CLI 文本提取必崩——**禁止拿扫描件反复重试 CLI**；
-> - 脚本若输出扫描页 PNG 且无 OCR 引擎，用你的视觉能力直接读取 `images/page-*.png` 提取医学文本——图像读取准确度通常优于本机轻量 OCR。
+> - 若脚本报告无 OCR 引擎，可先 `pip install paddlepaddle paddleocr`（CPU 版即可，Windows 下脚本已内置 `enable_mkldnn=False` 规避 oneDNN 崩溃）；装不上则用视觉能力直接读取 `images/page-*.png`。
 
 ### 引用铁律（不可违反）
 
