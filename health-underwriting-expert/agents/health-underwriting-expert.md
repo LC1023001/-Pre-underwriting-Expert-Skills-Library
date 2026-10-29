@@ -87,7 +87,19 @@ python "<SKILL_DIR>/scripts/kb_tool.py" search "甲状腺结节"
 python "<SKILL_DIR>/scripts/kb_tool.py" stats
 ```
 
-> 📌 **PDF/OCR 提取同理（2026-10-26 增补）**：解析用户上传的体检报告/病历 PDF 时，若内置 PDF CLI 返回退出码 127 或异常退出（部分扫描件可触发该组件崩溃），**不要重试**——立即降级为本机 Python 提取链：`pymupdf (fitz)` 提取文本与页面图像 → 图片走 OCR 引擎。提取失败只影响材料解析速度，不影响核保结论输出。
+> 📌 **PDF 提取链（2026-10-29 修订，替代 10-26 版）**：解析用户上传的体检报告/病历 PDF 时，**一律先跑内置提取脚本，不要直接调 PDF CLI**：
+>
+> ```bash
+> python "<SKILL_DIR>/scripts/pdf_extract.py" "<PDF绝对路径>" "<输出目录>"
+> ```
+>
+> 脚本内部已编排完整降级链：pymupdf 页级体检 → 纯文本 PDF 才走 PDF CLI（md-plain，30s 超时+产物校验）→ 含扫描页**完全跳过 CLI**（该 CLI 版本对扫描页必崩）→ 文本页 pymupdf 提取、扫描页渲染 150dpi PNG → 有 OCR 引擎自动识别，无则在报告里给出图片清单，由你逐张读取。
+>
+> **关于「退出码 127」的正确解读（2026-10-29 实测确认）**：
+> - workbuddy-pdf CLI 0.1.0 在 Windows 处理**含扫描页（无文本层）的 PDF** 时会原生崩溃（NTSTATUS 0xC0000409 堆栈缓冲区溢出，无任何报错输出），Git Bash 把崩溃码显示为 127——**这不是「命令不存在」**，重试必然复现；
+> - 真正找不到 CLI 时，run.sh/run.ps1 会在 stderr 打出 `workbuddy-pdf: CLI not found…` 字样，此时才属环境缺失；
+> - 体检报告/病历多为手机拍照扫描件（1页无文本+1图即是），故此类 PDF 用 CLI 文本提取必崩——**禁止拿扫描件反复重试 CLI**；
+> - 脚本若输出扫描页 PNG 且无 OCR 引擎，用你的视觉能力直接读取 `images/page-*.png` 提取医学文本——图像读取准确度通常优于本机轻量 OCR。
 
 ### 引用铁律（不可违反）
 
@@ -279,7 +291,7 @@ python "<SKILL_DIR>/scripts/kb_tool.py" stats
 
 1. **资料接收与OCR识别**
    - 接收用户上传的PDF/图片格式体检报告或病历
-   - 使用OCR引擎识别医学文本（PDF 解析组件不可用或崩溃时——退出码 127 等——按「检索命令」节的降级路径改用本机 Python 提取链，禁止重试）
+   - 使用 `pdf_extract.py` 提取医学文本（见「检索命令」节的 PDF 提取链——扫描页 PDF 禁止直接调 PDF CLI，该组件对扫描页会原生崩溃）
    - 提取：姓名、性别、年龄、身高、体重（BMI）、血压、各系统疾病史
 
 2. **医学信息提取与疾病归类**

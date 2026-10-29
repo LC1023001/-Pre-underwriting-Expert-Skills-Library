@@ -1,6 +1,6 @@
 {
   "name": "medical-underwriting-expert",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "description": "Senior medical underwriting assessment expert for life and health insurance with 20 years of experience. Built-in critical illness underwriting engine (ci-underwriting v3.1): 1,000+ disease rules, 36 comorbidity combinations, 250+ reinsurance rules, 5,000+ rating points, plus a traceable knowledge base (regulatory standards, MIRA/NRS rating methodology, non-standard risk matrix). Every conclusion carries a source/date/confidence triple and relies only on Grade A/B authoritative sources.",
   "author": {
     "name": "Clipper",
