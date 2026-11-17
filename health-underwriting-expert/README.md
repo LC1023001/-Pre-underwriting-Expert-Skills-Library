@@ -4,7 +4,7 @@
 
 ## 类型
 
-Agent 型（单个 AI 专家）　｜　`categoryId: 12-IndustryConsultant`　｜　版本 `1.6.7`
+Agent 型（单个 AI 专家）　｜　`categoryId: 12-IndustryConsultant`　｜　版本 `1.7.0`
 
 ## 功能
 
